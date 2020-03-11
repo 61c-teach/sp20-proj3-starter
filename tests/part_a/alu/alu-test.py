@@ -16,7 +16,7 @@ tests = [
   ("ALU div and rem test", "alu-div-rem"),
   ("ALU mulh test (extra credit)", "alu-mulh"),
   ("ALU mult/mulhu test", "alu-mult"),
-  ("ALU select, sub, BSel test", "alu-set-sub-bsel"),
+  ("ALU slt, sub, BSel test", "alu-slt-sub-bsel"),
   ("ALU shift test", "alu-shift"),
 
   ("ALU logic test", "alu-logic"),

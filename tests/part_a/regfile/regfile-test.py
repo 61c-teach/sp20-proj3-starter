@@ -12,9 +12,9 @@ script_dir = os.path.realpath(sys.path[0])
 logisim_location = os.path.join(script_dir, "../../../logisim-evolution.jar")
 
 tests = [
-  ("RegFile x0 test", "regfile-insert"),
+  ("RegFile x0 test", "regfile-x0"),
   ("RegFile zero test", "regfile-zero"),
-  ("RegFile insert test", "regfile-x0"),
+  ("RegFile insert test", "regfile-insert"),
   ("RegFile all registers test", "regfile-allregs"),
 ]
 

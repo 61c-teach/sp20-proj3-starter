@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 ASM_FILE_EXTENSION = ".s"
+VENUS_TRACE_PATTERN = "%1%\t%2%\t%5%\t%6%\t%7%\t%8%\t%9%\t%10%\t%pc%\t%inst%\t%line%\n"
 
 script_dir = os.path.realpath(sys.path[0])
 logisim_path = os.path.join(script_dir, "../../../logisim-evolution.jar")
@@ -15,12 +16,6 @@ venus_path = os.path.join(script_dir, "../../../venus-cs61c-sp20.jar")
 
 def main(asm_file_paths, num_cycles):
   error_log_path = os.path.join(script_dir, "error.log")
-
-  # Write a temporary Venus trace format file
-  trace_format = "%1%\t%2%\t%5%\t%6%\t%7%\t%8%\t%9%\t%10%\t%pc%\t%inst%\t%line%\n"
-  trace_format_path = os.path.join(script_dir, "trace_format")
-  with open(trace_format_path, "w") as f:
-    f.write(trace_format)
 
   for asm_file_path in asm_file_paths:
     asm_filename = os.path.basename(asm_file_path)
@@ -43,7 +38,7 @@ def main(asm_file_paths, num_cycles):
 
     # Generate reference output
     test_num_cycles = num_cycles
-    venus_cmd = ["java", "-jar", venus_path, asm_file_path, "-it", "-t", "-tf", trace_format_path, "-ti", "-ts", "-ur"]
+    venus_cmd = ["java", "-jar", venus_path, asm_file_path, "-it", "-t", "-ti", "-tp", VENUS_TRACE_PATTERN, "-ts", "-ur"]
     if num_cycles > -1:
       venus_cmd.append("-tn")
       venus_cmd.append(str(num_cycles + 1))
@@ -136,8 +131,6 @@ def main(asm_file_paths, num_cycles):
       continue
 
     print("  Created test %s!" % test_slug)
-
-  os.system("rm -f %s" % trace_format_path)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Create custom CPU tests")

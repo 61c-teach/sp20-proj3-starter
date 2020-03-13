@@ -73,45 +73,76 @@ def run_test(group_path, test_slug, output_type=None):
   test_runner = LogisimTest(group_path, circ_path, reference_output_path)
   return test_runner(student_output_path)
 
-def run_tests(part, group):
-  part_path = os.path.join(script_dir, "tests", part)
-  group_path = "%s/%s" % (part_path, group)
-  if not os.path.isdir(group_path):
-    groups = [filename for filename in os.listdir(part_path) if not filename.startswith(".")]
-    raise ValueError("Invalid test group: %s (choose from %s)" % (group, ", ".join(groups)))
+class TestPart:
+  def __init__(self, part, group, tests):
+    self.part = part
+    self.group = group
+    self.tests = tests
+  
+  def get(self):
+    return (self.part, self.group, self.tests)
 
-  tests = []
-  for filename in os.listdir(group_path):
-    match = re.match(r"^(.+)\.circ$", filename)
-    if match:
-      test_slug = match.group(1)
-      tests.append(("%s test" % test_slug, test_slug))
+def run_tests(mpart, mgroup, test):
+  test_parts = []
+  parts = sorted([folder for folder in os.listdir(os.path.join(script_dir, "tests")) if os.path.isdir(os.path.join(script_dir, "tests", folder))]) if mpart is None else [mpart]
+  for part in parts:
+    part_path = os.path.join(script_dir, "tests", part)
+    groups = [mgroup] if mgroup is not None else sorted([folder for folder in os.listdir(part_path) if os.path.isdir(os.path.join(part_path, folder))])
+    for group in groups:
+      tests = []
+      group_path = "%s/%s" % (part_path, group)
+      if not os.path.isdir(group_path):
+        groups = [filename for filename in os.listdir(part_path) if not filename.startswith(".")]
+        raise ValueError("Invalid test group: %s (choose from %s)" % (group, ", ".join(groups)))
 
-  print("Running tests for %s/%s..." % (part, group))
-  tests_passed = 0
-  tests_failed = 0
+      fls = []
+      if test is None:
+        fls = os.listdir(group_path)
+      else:
+        f = os.path.join(group_path, test)
+        if not os.path.isfile(f) or not re.match(r"^(.+)\.circ$", test):
+          raise ValueError(f"Invalid test file: {f}")
+        fls.append(test)
 
-  for test in tests:
-    description, test_slug = test[:2]
-    output_type = (test[2] if len(test) >= 3 else None)
-    did_pass, fail_reason = False, "Unknown test error"
-    try:
-      did_pass, fail_reason = run_test(group_path, test_slug, output_type)
-    except Exception as ex:
-      print(ex)
-    if did_pass:
-      print("\tPASSED test: %s" % description)
-      tests_passed += 1
+      for filename in sorted(fls):
+        match = re.match(r"^(.+)\.circ$", filename)
+        if match:
+          test_slug = match.group(1)
+          tests.append(("%s test" % test_slug, test_slug))
+
+      test_parts.append(TestPart(part, group, tests))
+  for part, group, tests in [p.get() for p in test_parts]:
+    part_path = os.path.join(script_dir, "tests", part)
+    group_path = "%s/%s" % (part_path, group)
+    print("Running tests for %s/%s..." % (part, group))
+    tests_passed = 0
+    tests_failed = 0
+
+    for test in tests:
+      description, test_slug = test[:2]
+      output_type = (test[2] if len(test) >= 3 else None)
+      did_pass, fail_reason = False, "Unknown test error"
+      try:
+        did_pass, fail_reason = run_test(group_path, test_slug, output_type)
+      except Exception as ex:
+        print(ex)
+      if did_pass:
+        print("\tPASSED test: %s" % description)
+        tests_passed += 1
+      else:
+        print("\tFAILED test: %s (%s)" % (description, fail_reason))
+        tests_failed += 1
+    if len(tests) == 0:
+      print(f"There are no tests for {part}/{group}!\n")
     else:
-      print("\tFAILED test: %s (%s)" % (description, fail_reason))
-      tests_failed += 1
-
-  print("Passed %d/%d tests" % (tests_passed, (tests_passed + tests_failed)))
+      print("Passed %d/%d tests\n" % (tests_passed, (tests_passed + tests_failed)))
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Run Logisim tests")
-  parser.add_argument("part", choices=["part_a", "part_b"], help="The project part the test is under (a/b)")
-  parser.add_argument("group", help="The group of tests to run")
+  parts = ["part_a", "part_b"]
+  parser.add_argument("part", choices=parts, help="The project part the test is under (a/b)", nargs="?", default=None)
+  parser.add_argument("group", help="The group of tests to run. If left blank, it will run all the tests of the part", default=None, nargs="?")
+  parser.add_argument("test", help="A specific test file to run. You must specify the correct group and the full filename! If left blank, it will be ignored", nargs="?")
   args = parser.parse_args()
-
-  run_tests(args.part, args.group)
+  
+  run_tests(args.part, args.group, args.test)

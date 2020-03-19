@@ -101,7 +101,7 @@ def run_tests(mpart, mgroup, test):
       else:
         f = os.path.join(group_path, test)
         if not os.path.isfile(f) or not re.match(r"^(.+)\.circ$", test):
-          raise ValueError(f"Invalid test file: {f}")
+          raise ValueError("Invalid test file: %s" % f)
         fls.append(test)
 
       for filename in sorted(fls):
@@ -133,7 +133,7 @@ def run_tests(mpart, mgroup, test):
         print("\tFAILED test: %s (%s)" % (description, fail_reason))
         tests_failed += 1
     if len(tests) == 0:
-      print(f"There are no tests for {part}/{group}!\n")
+      print("There are no tests for %s/%s!\n" % (part, group))
     else:
       print("Passed %d/%d tests\n" % (tests_passed, (tests_passed + tests_failed)))
 
